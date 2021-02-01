@@ -36,7 +36,7 @@ sidebar <- dashboardSidebar(width = 300,
     menuItem("Plots", tabName = "plotting", icon = icon("chart-bar"), selected = TRUE),
     menuItem("Metadata & Sample Filtering", tabName = "metadata", icon = icon("table")),
     menuItem("Dataset Pre-Processing Code", tabName = "pin_code", icon = icon("file-code")),
-    menuItem("App Source Code", tabName = "source_code", icon = icon("github")),
+    menuItem("Source Code", icon = icon("github"), href = "https://github.com/j-andrews7/GEE"),
     menuItem("About the App", tabName = "app_desc", icon = icon("book"))
   )
 )
@@ -92,7 +92,14 @@ body <- dashboardBody(
       fluidRow(
         box(title = tagList(icon("cog"), "dittoPlot Settings"), width = 4, solidHeader = TRUE, 
             collapsible = TRUE, collapsed = TRUE,
-            uiOutput("dplot.vars"),
+            fluidRow(
+              column(9,
+                uiOutput("dplot.vars")
+              ),
+              column(3,
+                     actionButton("dplot.reset", "Reset Plot")
+                     )
+            ),
           tabBox(width = 12, 
             tabPanel("Basic",
               uiOutput("dplot.basic.settings")
@@ -1604,6 +1611,10 @@ server <- function(input, output, session) {
     } else {
       updateSwitchInput(session, "ddimplot.keep.square", value = ddimplot.args$keep.square, disabled = FALSE)
     }
+  })
+  
+  observeEvent(input$dplot.reset, {
+    dplot.args <- .init_dplot_args()
   })
   
 }
