@@ -1559,6 +1559,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$dplot.plots, {
+    dplot.args$do.hover <- input$dplot.do.hover
     if("ridgeplot" %in% input$dplot.plots) {
       updateSwitchInput(session, "dplot.do.hover", value = FALSE, disabled = TRUE)
     } else if(!multi.dplot()) {
