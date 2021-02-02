@@ -90,16 +90,17 @@ body <- dashboardBody(
       ),
       
       fluidRow(
-        box(title = tagList(icon("cog"), "dittoPlot Settings"), width = 4, solidHeader = TRUE, 
-            collapsible = TRUE, collapsed = TRUE,
-            fluidRow(
-              column(9,
-                uiOutput("dplot.vars")
-              ),
-              column(3,
-                     actionButton("dplot.reset", "Reset Plot")
-                     )
-            ),
+        box(title = tagList(
+          fluidRow(
+            column(10,
+              icon("cog"), "dittoPlot Settings"),
+            column(2, align = "right",
+              actionButton("dplot.reset", "Reset Plot"))
+            )),
+          width = 4, solidHeader = TRUE, 
+          collapsible = TRUE, collapsed = TRUE,
+            
+          uiOutput("dplot.vars"),
           tabBox(width = 12, 
             tabPanel("Basic",
               uiOutput("dplot.basic.settings")
@@ -116,7 +117,14 @@ body <- dashboardBody(
           )
         ),
         box(
-          title = span(icon("cog"),"dittoDimPlot Settings"), width = 4, solidHeader = TRUE, 
+          title = tagList(
+            fluidRow(
+              column(10,
+                     icon("cog"), "dittoDimPlot Settings"),
+              column(2, align = "right",
+                     actionButton("ddimplot.reset", "Reset Plot"))
+            )), 
+          width = 4, solidHeader = TRUE, 
           collapsible = TRUE, collapsed = TRUE,
           uiOutput("ddimplot.vars"),
           tabBox(width = 12, 
@@ -138,7 +146,14 @@ body <- dashboardBody(
           )
         ),
         box(
-          title = span(icon("cog"),"Sample Distance Settings"), width = 4, solidHeader = TRUE, 
+          title = tagList(
+            fluidRow(
+              column(10,
+                     icon("cog"), "Sample Distance Settings"),
+              column(2, align = "right",
+                     actionButton("distheat.reset", "Reset Plot"))
+            )), 
+          width = 4, solidHeader = TRUE, 
           collapsible = TRUE, collapsed = TRUE,
           uiOutput("distheatmap.settings")
         )
