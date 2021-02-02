@@ -1246,7 +1246,7 @@ server <- function(input, output, session) {
       return(NULL)
     }
     
-    if(multi.dplot()) {
+    if(multi.ddimplot()) {
       p <- do.call(multi_dittoDimPlot, c(object = sce, plot.args))
     } else {
       p <- do.call(dittoDimPlot, c(object = sce, plot.args))
@@ -1266,7 +1266,7 @@ server <- function(input, output, session) {
       return(NULL)
     }
     
-    if(multi.dplot()) {
+    if(multi.ddimplot()) {
       p <- do.call(multi_dittoDimPlot, c(object = sce, plot.args))
     } else {
       p <- do.call(dittoDimPlot, c(object = sce, plot.args))
