@@ -36,7 +36,7 @@ sidebar <- dashboardSidebar(width = 300,
     menuItem("Plots", tabName = "plotting", icon = icon("chart-bar"), selected = TRUE),
     menuItem("Metadata & Sample Filtering", tabName = "metadata", icon = icon("table")),
     menuItem("Dataset Pre-Processing Code", tabName = "pin_code", icon = icon("file-code")),
-    menuItem("App Source Code", tabName = "source_code", icon = icon("github")),
+    menuItem("Source Code", icon = icon("github"), href = "https://github.com/j-andrews7/GEE"),
     menuItem("About the App", tabName = "app_desc", icon = icon("book"))
   )
 )
@@ -90,9 +90,17 @@ body <- dashboardBody(
       ),
       
       fluidRow(
-        box(title = tagList(icon("cog"), "dittoPlot Settings"), width = 4, solidHeader = TRUE, 
-            collapsible = TRUE, collapsed = TRUE,
-            uiOutput("dplot.vars"),
+        box(id = "dplot", title = tagList(
+          fluidRow(
+            column(10,
+              icon("cog"), "dittoPlot Settings"),
+            column(2, align = "right",
+              actionButton("dplot.reset", "Reset Plot"))
+            )),
+          width = 4, solidHeader = TRUE, 
+          collapsible = TRUE, collapsed = TRUE,
+            
+          uiOutput("dplot.vars"),
           tabBox(width = 12, 
             tabPanel("Basic",
               uiOutput("dplot.basic.settings")
@@ -108,8 +116,15 @@ body <- dashboardBody(
             )
           )
         ),
-        box(
-          title = span(icon("cog"),"dittoDimPlot Settings"), width = 4, solidHeader = TRUE, 
+        box(id = "ddimplot",
+          title = tagList(
+            fluidRow(
+              column(10,
+                     icon("cog"), "dittoDimPlot Settings"),
+              column(2, align = "right",
+                     actionButton("ddimplot.reset", "Reset Plot"))
+            )), 
+          width = 4, solidHeader = TRUE, 
           collapsible = TRUE, collapsed = TRUE,
           uiOutput("ddimplot.vars"),
           tabBox(width = 12, 
@@ -130,8 +145,15 @@ body <- dashboardBody(
                  )
           )
         ),
-        box(
-          title = span(icon("cog"),"Sample Distance Settings"), width = 4, solidHeader = TRUE, 
+        box(id = "distheat",
+          title = tagList(
+            fluidRow(
+              column(10,
+                     icon("cog"), "Sample Distance Settings"),
+              column(2, align = "right",
+                     actionButton("distheat.reset", "Reset Plot"))
+            )), 
+          width = 4, solidHeader = TRUE, 
           collapsible = TRUE, collapsed = TRUE,
           uiOutput("distheatmap.settings")
         )
@@ -1224,7 +1246,7 @@ server <- function(input, output, session) {
       return(NULL)
     }
     
-    if(multi.dplot()) {
+    if(multi.ddimplot()) {
       p <- do.call(multi_dittoDimPlot, c(object = sce, plot.args))
     } else {
       p <- do.call(dittoDimPlot, c(object = sce, plot.args))
@@ -1244,7 +1266,7 @@ server <- function(input, output, session) {
       return(NULL)
     }
     
-    if(multi.dplot()) {
+    if(multi.ddimplot()) {
       p <- do.call(multi_dittoDimPlot, c(object = sce, plot.args))
     } else {
       p <- do.call(dittoDimPlot, c(object = sce, plot.args))
@@ -1537,6 +1559,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$dplot.plots, {
+    dplot.args$do.hover <- input$dplot.do.hover
     if("ridgeplot" %in% input$dplot.plots) {
       updateSwitchInput(session, "dplot.do.hover", value = FALSE, disabled = TRUE)
     } else if(!multi.dplot()) {
@@ -1604,6 +1627,45 @@ server <- function(input, output, session) {
     } else {
       updateSwitchInput(session, "ddimplot.keep.square", value = ddimplot.args$keep.square, disabled = FALSE)
     }
+  })
+  
+  # Handle when Reset Plot buttons are used.
+  observeEvent(input$dplot.reset, {
+    dplot.args <- .init_dplot_args()
+    for(f in names(dataset()[["dplot.defaults"]])) {
+      dplot.args[[f]] <- dataset()[["dplot.defaults"]][[f]]
+    }
+    
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "dplot.jitter.color", value = dplot.args$jitter.color)
+    updateColourInput(session, "dplot.boxplot.color", value = dplot.args$boxplot.color)
+    updateColourInput(session, "dplot.line.color", value = dplot.args$line.color)
+
+    reset("dplot")
+  })
+  
+  observeEvent(input$ddimplot.reset, {
+    ddimplot.args <- .init_ddimplot_args()
+    for(f in names(dataset()[["ddimplot.defaults"]])) {
+      ddimplot.args[[f]] <- dataset()[["ddimplot.defaults"]][[f]]
+    }
+    
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "ddimplot.min.color", value = ddimplot.args$min.color)
+    updateColourInput(session, "ddimplot.max.color", value = ddimplot.args$max.color)
+    updateColourInput(session, "ddimplot.contour.color", value = ddimplot.args$contour.color)
+    
+    reset("ddimplot")
+  })
+  
+  observeEvent(input$distheat.reset, {
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "distheat.low", value = "#E38E0D")
+    updateColourInput(session, "distheat.mid", value = "#93D1E6")
+    updateColourInput(session, "distheat.high", value = "#2303A3")
+    updateColourInput(session, "distheat.border_color", value = "grey60")
+    
+    reset("distheat")
   })
   
 }
