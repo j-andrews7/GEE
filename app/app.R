@@ -90,7 +90,7 @@ body <- dashboardBody(
       ),
       
       fluidRow(
-        box(title = tagList(
+        box(id = "dplot", title = tagList(
           fluidRow(
             column(10,
               icon("cog"), "dittoPlot Settings"),
@@ -116,7 +116,7 @@ body <- dashboardBody(
             )
           )
         ),
-        box(
+        box(id = "ddimplot",
           title = tagList(
             fluidRow(
               column(10,
@@ -145,7 +145,7 @@ body <- dashboardBody(
                  )
           )
         ),
-        box(
+        box(id = "distheat",
           title = tagList(
             fluidRow(
               column(10,
@@ -1629,8 +1629,43 @@ server <- function(input, output, session) {
     }
   })
   
+  # Handle when Reset Plot buttons are used.
   observeEvent(input$dplot.reset, {
     dplot.args <- .init_dplot_args()
+    for(f in names(dataset()[["dplot.defaults"]])) {
+      dplot.args[[f]] <- dataset()[["dplot.defaults"]][[f]]
+    }
+    
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "dplot.jitter.color", value = dplot.args$jitter.color)
+    updateColourInput(session, "dplot.boxplot.color", value = dplot.args$boxplot.color)
+    updateColourInput(session, "dplot.line.color", value = dplot.args$line.color)
+
+    reset("dplot")
+  })
+  
+  observeEvent(input$ddimplot.reset, {
+    ddimplot.args <- .init_ddimplot_args()
+    for(f in names(dataset()[["ddimplot.defaults"]])) {
+      ddimplot.args[[f]] <- dataset()[["ddimplot.defaults"]][[f]]
+    }
+    
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "ddimplot.min.color", value = ddimplot.args$min.color)
+    updateColourInput(session, "ddimplot.max.color", value = ddimplot.args$max.color)
+    updateColourInput(session, "ddimplot.contour.color", value = ddimplot.args$contour.color)
+    
+    reset("ddimplot")
+  })
+  
+  observeEvent(input$distheat.reset, {
+    # These have to be updated manually, shinyjs doesn't recognize them.
+    updateColourInput(session, "distheat.low", value = "#E38E0D")
+    updateColourInput(session, "distheat.mid", value = "#93D1E6")
+    updateColourInput(session, "distheat.high", value = "#2303A3")
+    updateColourInput(session, "distheat.border_color", value = "grey60")
+    
+    reset("distheat")
   })
   
 }
