@@ -284,6 +284,13 @@ server <- function(input, output, session) {
     )
   })
   
+  # Update metadata table with new values on dataset switch so that any previous filter is not carried over
+  # in terms of samples removed from plots.
+  proxy <- dataTableProxy("metadata")
+  observe({
+    replaceData(proxy, colData(dataset()[["sce"]]))
+  })
+  
   # Source code.
   output$source.code <- renderUI({
     req(dataset)
