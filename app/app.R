@@ -283,6 +283,10 @@ server <- function(input, output, session) {
                     scroller = TRUE)
     )
   })
+  proxy <- dataTableProxy("metadata")
+  observe({
+    replaceData(proxy, colData(dataset()[["sce"]]))
+  })
   
   # Source code.
   output$source.code <- renderUI({
