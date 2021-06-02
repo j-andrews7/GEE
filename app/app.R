@@ -341,7 +341,7 @@ server <- function(input, output, session) {
                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
                     deferRender = TRUE,
                     autoWidth = TRUE,
-                    columnDefs = list(list(width = "4000px", targets = c(2,3))))
+                    columnDefs = list(list(width = "400px", targets = c(2,3))))
     ) %>% DT::formatStyle(columns = c(1, 2, 3, 4, 5), fontSize = '80%')
   })
   
