@@ -36,6 +36,8 @@ sidebar <- dashboardSidebar(width = 300,
     menuItem("Plots", tabName = "plotting", icon = icon("chart-bar"), selected = TRUE),
     menuItem("Metadata & Sample Filtering", tabName = "metadata", icon = icon("table")),
     menuItem("Dataset Pre-Processing Code", tabName = "pin_code", icon = icon("file-code")),
+    menuItem("External Dataset Descriptions", tabName = "ext_data", icon = icon("file-alt")),
+    menuItem("Internal Dataset Descriptions", tabName = "int_data", icon = icon("file-alt")),
     menuItem("Source Code", icon = icon("github"), href = "https://github.com/j-andrews7/GEE"),
     menuItem("About the App", tabName = "app_desc", icon = icon("book"))
   )
@@ -176,6 +178,22 @@ body <- dashboardBody(
       )
     ),
     
+    tabItem(tabName = "ext_data",
+            fluidRow(
+              box(width = 12,
+                  DTOutput("ext.data")
+              )
+            )
+    ),
+    
+    tabItem(tabName = "int_data",
+            fluidRow(
+              box(width = 12,
+                  DTOutput("int.data")
+              )
+            )
+    ),
+    
     tabItem(tabName = "app_desc",
       fluidRow(
         box(width = 12,
@@ -243,10 +261,19 @@ server <- function(input, output, session) {
   output$metadata <- renderUI({})
   outputOptions(output, "metadata", suspendWhenHidden = FALSE)
   
+  output$ext.data <- renderUI({})
+  outputOptions(output, "ext.data", suspendWhenHidden = FALSE)
+  
+  output$int.data <- renderUI({})
+  outputOptions(output, "int.data", suspendWhenHidden = FALSE)
+  
   # Load chosen Pin.
   dataset <- reactive({
     pin_get(input$dataset, board = "rsconnect")
   })
+  
+  ext.data.desc <- reactive({pin_get("external_data_descriptions", board = "rsconnect")})
+  int.data.desc <- reactive({pin_get("internal_data_descriptions", board = "rsconnect")})
   
   observeEvent(dataset(),{
     for(f in names(dataset()[["dplot.defaults"]])) {
@@ -282,6 +309,40 @@ server <- function(input, output, session) {
                     scrollY = 700,
                     scroller = TRUE)
     )
+  })
+  
+  output$ext.data <- renderDT({
+    req(ext.data.desc)
+    df <- ext.data.desc()
+    DT::datatable(df,
+                  filter = "top",
+                  extensions = c("Buttons"),
+                  options = list(
+                    search = list(regex = TRUE),
+                    lengthMenu = list(c(10, 25, 50, -1), c("10", "25", "50", "all")),
+                    dom = 'Blfrtip',
+                    buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                    deferRender = TRUE,
+                    autoWidth = TRUE,
+                    columnDefs = list(list(width = "350px", targets = c(2,3))))
+    ) %>% DT::formatStyle(columns = c(1, 2, 3, 4, 5, 6, 7), fontSize = '75%')
+  })
+  
+  output$int.data <- renderDT({
+    req(int.data.desc)
+    df <- int.data.desc()
+    DT::datatable(df,
+                  filter = "top",
+                  extensions = c("Buttons"),
+                  options = list(
+                    search = list(regex = TRUE),
+                    lengthMenu = list(c(10, 25, 50, -1), c("10", "25", "50", "all")),
+                    dom = 'Blfrtip',
+                    buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                    deferRender = TRUE,
+                    autoWidth = TRUE,
+                    columnDefs = list(list(width = "4000px", targets = c(2,3))))
+    ) %>% DT::formatStyle(columns = c(1, 2, 3, 4, 5), fontSize = '80%')
   })
   
   # Update metadata table with new values on dataset switch so that any previous filter is not carried over
@@ -436,20 +497,23 @@ server <- function(input, output, session) {
           pickerInput("dplot.assay", 
                       span(popify(icon("question-circle"), "Assay", 
                                   c("The counts assay to display. Generally, these will look very similar ",
-                                    "(except perhaps the raw counts).<br><br>",
+                                    "(except perhaps the raw counts & TPMs).<br><br>",
                                     "If you are not sure which to use, <b>lognorm</b> is a safe bet, though ",
-                                    "<b>vst</b> or <b>rlog</b> may look better in heatmaps.",
+                                    "<b>vst</b> or <b>rlog</b> may look better in heatmaps. <b>tpm</b> should be used to compare ",
+                                    "expression of different genes <i>within</i> a sample.",
                                     "<br><br>",
                                     "Potential Choices (may be limited by dataset):",
                                     "<br><br>",
                                     "<b>raw: </b>", 
-                                    "Raw counts, typically output from RSEM or salmon.<br><br>",
+                                    "Raw counts, typically output from salmon.<br><br>",
                                     "<b>norm: </b>", 
                                     "Normalized counts via DESeq2.<br><br>",
                                     "<b>cpm: </b>",
                                     "Normalized library size transformed counts-per-million via edgeR.<br><br>",
                                     "<b>lognorm: </b>",
                                     "log2 (normalized counts + 1) via DESeq2.<br><br>",
+                                    "<b>tpm: </b>",
+                                    "Transcripts-per-million gene-level abundances as collapsed by tximport after salmon transcript quantification.<br><br>",
                                     "<b>vst: </b>",
                                     "Variance stabilization-transformed counts via DESeq2. ",
                                     "Deals with increased variability of low counts on the log scale.<br><br>",
@@ -928,20 +992,23 @@ server <- function(input, output, session) {
                pickerInput("ddimplot.assay", 
                            span(popify(icon("question-circle"), "Assay", 
                                        c("The counts assay to display. Generally, these will look very similar ",
-                                         "(except perhaps the raw counts).<br><br>",
+                                         "(except perhaps the raw counts & TPMs).<br><br>",
                                          "If you are not sure which to use, <b>lognorm</b> is a safe bet, though ",
-                                         "<b>vst</b> or <b>rlog</b> may look better in heatmaps.",
+                                         "<b>vst</b> or <b>rlog</b> may look better in heatmaps. <b>tpm</b> should be used to compare ",
+                                         "expression of different genes <i>within</i> a sample.",
                                          "<br><br>",
                                          "Potential Choices (may be limited by dataset):",
                                          "<br><br>",
                                          "<b>raw: </b>", 
-                                         "Raw counts, typically output from RSEM or salmon.<br><br>",
+                                         "Raw counts, typically output from salmon.<br><br>",
                                          "<b>norm: </b>", 
                                          "Normalized counts via DESeq2.<br><br>",
                                          "<b>cpm: </b>",
                                          "Normalized library size transformed counts-per-million via edgeR.<br><br>",
                                          "<b>lognorm: </b>",
                                          "log2 (normalized counts + 1) via DESeq2.<br><br>",
+                                         "<b>tpm: </b>",
+                                         "Transcripts-per-million gene-level abundances as collapsed by tximport after salmon transcript quantification.<br><br>",
                                          "<b>vst: </b>",
                                          "Variance stabilization-transformed counts via DESeq2. ",
                                          "Deals with increased variability of low counts on the log scale.<br><br>",
@@ -1294,20 +1361,23 @@ server <- function(input, output, session) {
           pickerInput("distheat.assay", 
                       span(popify(icon("question-circle"), "Assay", 
                                   c("The counts assay to display. Generally, these will look very similar ",
-                                    "(except perhaps the raw counts).<br><br>",
+                                    "(except perhaps the raw counts & TPMs).<br><br>",
                                     "If you are not sure which to use, <b>lognorm</b> is a safe bet, though ",
-                                    "<b>vst</b> or <b>rlog</b> may look better in heatmaps.",
+                                    "<b>vst</b> or <b>rlog</b> may look better in heatmaps. <b>tpm</b> should be used to compare ",
+                                    "expression of different genes <i>within</i> a sample.",
                                     "<br><br>",
                                     "Potential Choices (may be limited by dataset):",
                                     "<br><br>",
                                     "<b>raw: </b>", 
-                                    "Raw counts, typically output from RSEM or salmon.<br><br>",
+                                    "Raw counts, typically output from salmon.<br><br>",
                                     "<b>norm: </b>", 
                                     "Normalized counts via DESeq2.<br><br>",
                                     "<b>cpm: </b>",
                                     "Normalized library size transformed counts-per-million via edgeR.<br><br>",
                                     "<b>lognorm: </b>",
                                     "log2 (normalized counts + 1) via DESeq2.<br><br>",
+                                    "<b>tpm: </b>",
+                                    "Transcripts-per-million gene-level abundances as collapsed by tximport after salmon transcript quantification.<br><br>",
                                     "<b>vst: </b>",
                                     "Variance stabilization-transformed counts via DESeq2. ",
                                     "Deals with increased variability of low counts on the log scale.<br><br>",
@@ -1316,7 +1386,7 @@ server <- function(input, output, session) {
                                     "Deals with increased variability of low counts on the log scale.<br><br>",
                                     "See <a href=http://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#effects-of-transformations-on-the-variance>",
                                     "the DESeq2 vignette</a> for details and examples of why count transformations can be helpful for visualization."
-                                  ), placement = "bottom", trigger = "click"),"Assay:"), 
+                                  ), placement = "top", trigger = "click"),"Assay:"), 
                       choices = names(assays(sce)),
                       options = list(
                         `live-search` = TRUE,
