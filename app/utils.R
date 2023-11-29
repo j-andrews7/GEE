@@ -36,7 +36,7 @@
     boxplot.width = 0.2,
     boxplot.color = "black",
     boxplot.fill = TRUE,
-    boxplot.position.dodge = NULL,
+    boxplot.position.dodge = 1,
     vlnplot.lineweight = 1,
     vlnplot.width = 1,
     vlnplot.scaling = "area",
@@ -174,6 +174,18 @@
     out$var <- ge
   }
   
+  if (is.na(input$dplot.min)) {
+    out$min <- NULL
+  } else {
+    out$min <- input$dplot.min
+  }
+  
+  if (is.na(input$dplot.max)) {
+    out$max <- NULL
+  } else {
+    out$max <- input$dplot.max
+  }
+  
   out$group.by <- input$dplot.group.by
   out$split.by <- input$dplot.split.by
   out$assay <- input$dplot.assay
@@ -187,10 +199,8 @@
   out$sub <- input$dplot.sub
   out$ylab <- input$dplot.ylab
   out$xlab <- input$dplot.xlab
-  out$min <- input$dplot.min
-  out$max <- input$dplot.max
   out$x.labels.rotate <- input$dplot.x.labels.rotate
-  out$x.reorder <- as.numeric(input$dplot.x.reorder_order)
+  out$x.reorder <- as.numeric(input$dplot.x.reorder_order$text)
   
   out$jitter.size <- input$dplot.jitter.size
   out$jitter.width <- input$dplot.jitter.width

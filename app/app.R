@@ -14,17 +14,17 @@ library(shinyjs)
 library(shinyWidgets)
 library(rintrojs)
 library(DT)
-library(reactlog)
 library(shinycssloaders)
 library(colourpicker)
 library(RColorBrewer)
 library(ggrepel)
+library(httr)
 options(repos = BiocManager::repositories())
 
-reactlog_enable()
+httr::set_config(config(ssl_verifypeer = FALSE, ssl_verifyhost = FALSE))
 
-board_register_rsconnect(server = "https://svlpbakerlab01.stjude.org/")
-datasets <- pin_find("RNAseq_data", board = "rsconnect")
+board <- board_connect()
+datasets <- pin_find("RNAseq_data", board = board)
 
 header <- dashboardHeader(title = "Gene Expression Explorer", titleWidth = 300)
 
@@ -269,11 +269,11 @@ server <- function(input, output, session) {
   
   # Load chosen Pin.
   dataset <- reactive({
-    pin_get(input$dataset, board = "rsconnect")
+    pin_read(input$dataset, board = board)
   })
   
-  ext.data.desc <- reactive({pin_get("external_data_descriptions", board = "rsconnect")})
-  int.data.desc <- reactive({pin_get("internal_data_descriptions", board = "rsconnect")})
+  ext.data.desc <- reactive({pin_read("jandrews/external_data_descriptions", board = board)})
+  int.data.desc <- reactive({pin_read("jandrews/internal_data_descriptions", board = board)})
   
   observeEvent(dataset(),{
     for(f in names(dataset()[["dplot.defaults"]])) {
@@ -394,8 +394,16 @@ server <- function(input, output, session) {
   # basic parameters.
   output$dplot.vars <- renderUI({
     req(dataset)
-    genes <- getGenes(dataset()[["sce"]])
-    metas <- getMetas(dataset()[["sce"]])
+    sce <- dataset()[["sce"]]
+    
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    genes <- getGenes(sce, swap.rownames = swapper)
+    metas <- getMetas(sce)
     
     if (is.null(dataset()[["dplot.defaults"]][["genes"]]) & is.null(dataset()[["dplot.defaults"]][["metas"]])) {
       sel.gene <- genes[1]
@@ -431,8 +439,15 @@ server <- function(input, output, session) {
   output$dplot.basic.settings <- renderUI({
     req(dataset, multi.dplot, dplot.args)
     sce <- dataset()[["sce"]]
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
     metas <- getMetas(sce)
-    genes <- getGenes(sce)
+    genes <- getGenes(sce, swap.rownames = swapper)
     
     tagList(
       fluidRow(
@@ -856,6 +871,14 @@ server <- function(input, output, session) {
     sce <- dataset()[["sce"]]
     
     plot.args <- .collect_dittoplot_args()
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    plot.args$swap.rownames <- swapper
     
     if(is.null(plot.args$var) && is.null(plot.args$vars)) {
       return(NULL)
@@ -880,6 +903,14 @@ server <- function(input, output, session) {
     req(input$dplot.x.reorder_order, dataset)
     sce <- dataset()[["sce"]]
     plot.args <- .collect_dittoplot_args()
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    plot.args$swap.rownames <- swapper
     
     if(is.null(plot.args$var) && is.null(plot.args$vars)) {
       return(NULL)
@@ -903,8 +934,15 @@ server <- function(input, output, session) {
   # basic parameters.
   output$ddimplot.vars <- renderUI({
     req(dataset)
-    genes <- getGenes(dataset()[["sce"]])
-    metas <- getMetas(dataset()[["sce"]])
+    sce <- dataset()[["sce"]]
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    genes <- getGenes(sce, swap.rownames = swapper)
+    metas <- getMetas(sce)
     
     if (is.null(dataset()[["ddimplot.defaults"]][["genes"]]) & is.null(dataset()[["ddimplot.defaults"]][["metas"]])) {
       sel.gene <- genes[1]
@@ -940,8 +978,15 @@ server <- function(input, output, session) {
   output$ddimplot.basic.settings <- renderUI({
     req(dataset, multi.ddimplot, ddimplot.args)
     sce <- dataset()[["sce"]]
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
     metas <- getMetas(sce)
-    genes <- getGenes(sce)
+    genes <- getGenes(sce, swap.rownames = swapper)
     
     tagList(
       fluidRow(
@@ -1315,6 +1360,14 @@ server <- function(input, output, session) {
     sce <- dataset()[["sce"]]
     
     plot.args <- .collect_dittodimplot_args()
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    plot.args$swap.rownames <- swapper
     
     if(is.null(plot.args$var) && is.null(plot.args$vars)) {
       return(NULL)
@@ -1335,6 +1388,14 @@ server <- function(input, output, session) {
     req(ddimplot.args, dataset)
     sce <- dataset()[["sce"]]
     plot.args <- .collect_dittodimplot_args()
+
+    swapper <- NULL
+
+    if("SYMBOL" %in% names(rowData(sce))) {
+        swapper <- "SYMBOL"
+    }
+
+    plot.args$swap.rownames <- swapper
     
     if(is.null(plot.args$var) && is.null(plot.args$vars)) {
       return(NULL)
